@@ -1,0 +1,514 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alight</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f7fb;
+      color: #243447;
+      padding: 20px;
+    }
+    .container {
+      max-width: 760px;
+      margin: 30px auto;
+      background: white;
+      padding: 24px;
+      border-radius: 16px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.08);
+    }
+    h1 { text-align: center; margin-bottom: 12px; color: #18be82; }
+    .subtitle { text-align: center; color: #5f6f7f; margin-bottom: 18px; }
+    .note { background: #eef7ff; border-left: 4px solid #18be82; padding: 12px; margin-bottom: 18px; font-size: 14px; }
+    .hidden { display: none !important; }
+    .error { color: rgb(150, 34, 58); font-size: 13px; margin-top: 8px; }
+    form { margin-bottom: 20px; }
+    input, textarea, select, button { width: 100%; padding: 10px; margin-top: 8px; border-radius: 8px; border: 1px solid #d8e1eb; font-size: 14px; }
+    input:focus, textarea:focus, select:focus { outline: none; border-color: #18be82; }
+    button { background: #18be82; color: white; border: none; cursor: pointer; font-weight: bold; }
+    button:hover { background: #14a56f; }
+    .auth-grid { display: grid; gap: 16px; }
+    .card { background: #f9fbfe; border: 1px solid #e4ebf2; border-radius: 12px; padding: 14px; margin-bottom: 14px; }
+    .card h3 { margin-bottom: 8px; color: #28415f; }
+    .pill { display: inline-block; background: #e8f3ff; color: #2d5b87; padding: 4px 8px; border-radius: 999px; font-size: 12px; margin: 4px 6px 0 0; }
+    .meta { color: #6d7b8a; font-size: 12px; margin-top: 8px; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; gap: 10px; flex-wrap: wrap; }
+    .topbar button { width: auto; padding: 8px 12px; }
+    .feed-list { display: grid; gap: 12px; }
+    .small { font-size: 12px; color: #73808f; }
+    .empty { text-align: center; color: #6d7b8a; padding: 14px; }
+    .gentle-card { background: linear-gradient(135deg, #f3fbff, #eef7ff); }
+    .prompt-box { background: white; border: 1px solid #dce9f5; border-radius: 10px; padding: 12px; margin-top: 10px; color: #2e4f68; font-weight: 600; line-height: 1.5; }
+    .prompt-actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+    .prompt-actions button { width: auto; padding: 8px 12px; }
+    .guideline-list { margin: 8px 0 0 18px; color: #4c5c6c; line-height: 1.6; }
+    .post-actions { display: flex; gap: 10px; align-items: center; margin-top: 10px; flex-wrap: wrap; }
+    .like-btn { width: auto; padding: 7px 10px; border-radius: 999px; background: #eef6ff; color: #2b5d8b; font-weight: 600; }
+    .like-btn:hover { background: #dceeff; }
+    .comment-form { display: flex; gap: 8px; margin-top: 8px; }
+    .comment-form input { margin-top: 0; }
+    .comment-form button { width: auto; padding: 8px 12px; }
+    .comment-list { margin-top: 10px; display: grid; gap: 8px; }
+    .comment-item { background: white; border: 1px solid #e8eff6; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+    .comment-item strong { color: #28415f; }
+    .password-toggle { display: flex; align-items: center; gap: 8px; font-size: 13px; color: #5f6f7f; margin-top: 6px; }
+    .password-toggle input { width: auto; margin: 0; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🌤️ Alight</h1>
+    <p class="subtitle">A calm place for learning, goodness, and gentle growth.</p>
+
+    <div id="auth-forms" class="auth-grid">
+      <div class="note">
+        This feed is made for thoughtful people. It is meant to feel calm, helpful, and uplifting — not like endless scrolling.
+      </div>
+
+      <form id="signup-form" class="card">
+        <h3>Create Account</h3>
+        <input id="signup-email" placeholder="Email address" type="email" required />
+        <input id="signup-password" placeholder="Password (min 6 chars)" type="password" required />
+        <label class="password-toggle">
+          <input type="checkbox" class="show-password-toggle" data-target="signup-password" />
+          Show password
+        </label>
+        <input id="signup-name" placeholder="Your name" type="text" required />
+        <button type="submit">Sign up</button>
+        <div id="signup-error" class="error"></div>
+      </form>
+
+      <form id="login-form" class="card">
+        <h3>Log In</h3>
+        <input id="login-email" placeholder="Email address" type="email" required />
+        <input id="login-password" placeholder="Password" type="password" required />
+        <label class="password-toggle">
+          <input type="checkbox" class="show-password-toggle" data-target="login-password" />
+          Show password
+        </label>
+        <button type="submit">Log in</button>
+        <div id="login-error" class="error"></div>
+      </form>
+    </div>
+
+    <div id="app-area" class="hidden">
+      <div class="topbar">
+        <div>
+          <h3 id="welcome-text">Welcome</h3>
+          <div id="welcome-email" class="small"></div>
+        </div>
+        <button id="signout" type="button">Sign out</button>
+      </div>
+
+      <div class="card gentle-card">
+        <h3>Today's gentle focus</h3>
+        <p class="small">A calm prompt to help the day feel more grounded and useful.</p>
+        <div class="prompt-box" id="daily-prompt">Loading a kind prompt...</div>
+        <div class="prompt-actions">
+          <button id="new-prompt" type="button">New prompt</button>
+          <button id="save-prompt" type="button">Save this idea</button>
+        </div>
+        <div id="prompt-status" class="small"></div>
+      </div>
+
+      <div class="card">
+        <h3>How this community works</h3>
+        <ul class="guideline-list">
+          <li>Share something kind, helpful, or reflective.</li>
+          <li>Leave room for learning and calm growth.</li>
+          <li>Support people who want to feel better, not just scroll.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>Share something meaningful</h3>
+        <form id="post-form">
+          <textarea id="post-text" rows="3" placeholder="Share a hobby tip, a science fact, a psychology idea, or a kind reminder..."></textarea>
+          <select id="post-category">
+            <option value="positivity">Positivity</option>
+            <option value="science">Science</option>
+            <option value="psychology">Psychology</option>
+            <option value="hobbies">Hobbies</option>
+            <option value="games">Educational Games</option>
+          </select>
+          <button type="submit">Share to the feed</button>
+          <div id="post-error" class="error"></div>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3>Purposeful Feed</h3>
+        <p class="small">This feed is designed for calm learning, useful ideas, and good energy.</p>
+        <div id="feed" class="feed-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const signupForm = document.getElementById("signup-form");
+    const loginForm = document.getElementById("login-form");
+    const signupError = document.getElementById("signup-error");
+    const loginError = document.getElementById("login-error");
+    const authForms = document.getElementById("auth-forms");
+    const appArea = document.getElementById("app-area");
+    const signoutBtn = document.getElementById("signout");
+    const welcomeText = document.getElementById("welcome-text");
+    const welcomeEmail = document.getElementById("welcome-email");
+    const postForm = document.getElementById("post-form");
+    const postError = document.getElementById("post-error");
+    const feed = document.getElementById("feed");
+    const promptBox = document.getElementById("daily-prompt");
+    const promptStatus = document.getElementById("prompt-status");
+    const newPromptBtn = document.getElementById("new-prompt");
+    const savePromptBtn = document.getElementById("save-prompt");
+    const showPasswordToggles = document.querySelectorAll(".show-password-toggle");
+
+    const promptIdeas = [
+      "What is one small thing you can learn today that would make your life feel a little richer?",
+      "What kind of kindness can you offer yourself this evening?",
+      "What is one useful idea you want to carry into tomorrow?",
+      "What would make this moment feel a bit calmer, lighter, or more meaningful?"
+    ];
+
+    function simpleHash(str) {
+      let hash = 0;
+      for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+      }
+      return Math.abs(hash).toString(36);
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/\"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+
+    function safeParse(key, fallback) {
+      try {
+        const value = localStorage.getItem(key);
+        return value ? JSON.parse(value) : fallback;
+      } catch {
+        return fallback;
+      }
+    }
+
+    function getCurrentUser() {
+      const email = localStorage.getItem("loggedInUser");
+      if (!email) return null;
+      const users = safeParse("users", {});
+      return users[email] || null;
+    }
+
+    function getPosts() {
+      const posts = safeParse("posts", []);
+      if (posts.length === 0) {
+        const starterPosts = [
+          {
+            id: 1,
+            authorName: "Mina",
+            authorEmail: "mina@example.com",
+            text: "A small science fact: sunlight helps your body make vitamin D, which supports your mood and bones.",
+            category: "science",
+            likes: 2,
+            likedBy: [],
+            comments: [
+              { authorName: "Noah", text: "This is such a calm reminder.", createdAt: new Date(Date.now() - 1000 * 60 * 20).toISOString() }
+            ],
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 3).toISOString()
+          },
+          {
+            id: 2,
+            authorName: "Noah",
+            authorEmail: "noah@example.com",
+            text: "A calm hobby idea: journaling for 5 minutes can help your mind feel less crowded.",
+            category: "hobbies",
+            likes: 1,
+            likedBy: [],
+            comments: [],
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 8).toISOString()
+          },
+          {
+            id: 3,
+            authorName: "Ava",
+            authorEmail: "ava@example.com",
+            text: "A psychology reminder: doing one helpful thing today can create a stronger feeling of purpose.",
+            category: "psychology",
+            likes: 3,
+            likedBy: [],
+            comments: [],
+            createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString()
+          }
+        ];
+        localStorage.setItem("posts", JSON.stringify(starterPosts));
+        return starterPosts;
+      }
+      return posts;
+    }
+
+    function savePosts(posts) {
+      localStorage.setItem("posts", JSON.stringify(posts));
+    }
+
+    function formatDate(value) {
+      const date = new Date(value);
+      return date.toLocaleString([], { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" });
+    }
+
+    function renderPrompt(forceReset = false) {
+      let prompt = localStorage.getItem("dailyPrompt");
+      if (!prompt || forceReset) {
+        prompt = promptIdeas[Math.floor(Math.random() * promptIdeas.length)];
+        localStorage.setItem("dailyPrompt", prompt);
+      }
+      promptBox.textContent = prompt;
+      promptStatus.textContent = "";
+    }
+
+    function savePromptToMemory() {
+      const prompt = promptBox.textContent.trim();
+      if (!prompt) return;
+      const savedPrompts = safeParse("savedPrompts", []);
+      const updated = [prompt, ...savedPrompts.filter(item => item !== prompt)].slice(0, 6);
+      localStorage.setItem("savedPrompts", JSON.stringify(updated));
+      promptStatus.textContent = "Saved to your gentle ideas.";
+    }
+
+    showPasswordToggles.forEach((toggle) => {
+      toggle.addEventListener("change", () => {
+        const targetInput = document.getElementById(toggle.dataset.target);
+        if (!targetInput) return;
+        targetInput.type = toggle.checked ? "text" : "password";
+      });
+    });
+
+    function renderFeed() {
+      const posts = getPosts().slice().sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      if (!posts.length) {
+        feed.innerHTML = '<div class="empty">No posts yet. Share the first thoughtful post.</div>';
+        return;
+      }
+
+      feed.innerHTML = posts.map(post => {
+        const categoryLabel = post.category.charAt(0).toUpperCase() + post.category.slice(1);
+        const user = getCurrentUser();
+        const likedByCurrentUser = user && post.likedBy && post.likedBy.includes(user.email);
+        const likeLabel = likedByCurrentUser ? "Liked" : "Like";
+        const commentsMarkup = (post.comments || []).map(comment => `
+          <div class="comment-item">
+            <strong>${escapeHtml(comment.authorName || "Someone")}</strong>
+            <div>${escapeHtml(comment.text)}</div>
+          </div>
+        `).join("");
+
+        return `
+          <div class="card">
+            <div class="pill">${escapeHtml(categoryLabel)}</div>
+            <h3>${escapeHtml(post.authorName)}</h3>
+            <p>${escapeHtml(post.text)}</p>
+            <div class="meta">${formatDate(post.createdAt)}</div>
+            <div class="post-actions">
+              <button class="like-btn" data-post-id="${post.id}">${likeLabel} (${post.likes || 0})</button>
+              <div class="small">${(post.comments || []).length} comments</div>
+            </div>
+            <form class="comment-form" data-post-id="${post.id}">
+              <input type="text" placeholder="Add a kind comment..." required />
+              <button type="submit">Comment</button>
+            </form>
+            <div class="comment-list">${commentsMarkup}</div>
+          </div>
+        `;
+      }).join("");
+    }
+
+    function updateAuthState() {
+      const user = getCurrentUser();
+      if (user) {
+        authForms.classList.add("hidden");
+        appArea.classList.remove("hidden");
+        welcomeText.textContent = `Welcome, ${user.name}`;
+        welcomeEmail.textContent = user.email;
+        renderPrompt();
+        renderFeed();
+      } else {
+        authForms.classList.remove("hidden");
+        appArea.classList.add("hidden");
+        welcomeText.textContent = "Welcome";
+        welcomeEmail.textContent = "";
+        renderPrompt();
+      }
+    }
+
+    signupForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      signupError.textContent = "";
+      const email = document.getElementById("signup-email").value.trim();
+      const password = document.getElementById("signup-password").value;
+      const name = document.getElementById("signup-name").value.trim();
+
+      if (!email || !password || !name) {
+        signupError.textContent = "Please fill in all fields.";
+        return;
+      }
+      if (password.length < 6) {
+        signupError.textContent = "Password must be at least 6 characters.";
+        return;
+      }
+
+      const users = safeParse("users", {});
+      if (users[email]) {
+        signupError.textContent = "Email already registered.";
+        return;
+      }
+
+      users[email] = { name, email, password: simpleHash(password) };
+      localStorage.setItem("users", JSON.stringify(users));
+      localStorage.setItem("loggedInUser", email);
+      document.getElementById("signup-email").value = "";
+      document.getElementById("signup-password").value = "";
+      document.getElementById("signup-name").value = "";
+      updateAuthState();
+    });
+
+    loginForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      loginError.textContent = "";
+      const email = document.getElementById("login-email").value.trim();
+      const password = document.getElementById("login-password").value;
+
+      if (!email || !password) {
+        loginError.textContent = "Please enter email and password.";
+        return;
+      }
+
+      const users = safeParse("users", {});
+      const user = users[email];
+      if (!user) {
+        loginError.textContent = "Email not found.";
+        return;
+      }
+      if (user.password !== simpleHash(password)) {
+        loginError.textContent = "Wrong password.";
+        return;
+      }
+
+      localStorage.setItem("loggedInUser", email);
+      document.getElementById("login-email").value = "";
+      document.getElementById("login-password").value = "";
+      updateAuthState();
+    });
+
+    signoutBtn.addEventListener("click", () => {
+      localStorage.removeItem("loggedInUser");
+      updateAuthState();
+    });
+
+    postForm.addEventListener("submit", (e) => {
+      e.preventDefault();
+      postError.textContent = "";
+      const user = getCurrentUser();
+      if (!user) return;
+
+      const text = document.getElementById("post-text").value.trim();
+      const category = document.getElementById("post-category").value;
+
+      if (!text) {
+        postError.textContent = "Please write something to share.";
+        return;
+      }
+
+      const negativePatterns = /\b(hate|worthless|stupid|idiot|kill|suicide|die|hopeless|doom|terrible)\b/i;
+      if (negativePatterns.test(text)) {
+        postError.textContent = "Please keep this space kind and helpful. Share something uplifting or reflective instead.";
+        return;
+      }
+
+      const posts = getPosts();
+      posts.unshift({
+        id: Date.now(),
+        authorName: user.name,
+        authorEmail: user.email,
+        text,
+        category,
+        likes: 0,
+        likedBy: [],
+        comments: [],
+        createdAt: new Date().toISOString()
+      });
+
+      savePosts(posts);
+      document.getElementById("post-text").value = "";
+      renderFeed();
+    });
+
+    feed.addEventListener("click", (e) => {
+      const button = e.target.closest(".like-btn");
+      if (!button) return;
+
+      const user = getCurrentUser();
+      if (!user) return;
+
+      const postId = Number(button.dataset.postId);
+      const posts = getPosts();
+      const post = posts.find(item => item.id === postId);
+      if (!post) return;
+
+      if (!post.likedBy) post.likedBy = [];
+      if (post.likedBy.includes(user.email)) {
+        post.likedBy = post.likedBy.filter(email => email !== user.email);
+      } else {
+        post.likedBy.push(user.email);
+      }
+
+      post.likes = post.likedBy.length;
+      savePosts(posts);
+      renderFeed();
+    });
+
+    feed.addEventListener("submit", (e) => {
+      const form = e.target.closest(".comment-form");
+      if (!form) return;
+
+      e.preventDefault();
+      const user = getCurrentUser();
+      if (!user) return;
+
+      const postId = Number(form.dataset.postId);
+      const input = form.querySelector("input");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const posts = getPosts();
+      const post = posts.find(item => item.id === postId);
+      if (!post) return;
+
+      if (!post.comments) post.comments = [];
+      post.comments.unshift({
+        authorName: user.name,
+        authorEmail: user.email,
+        text,
+        createdAt: new Date().toISOString()
+      });
+
+      savePosts(posts);
+      input.value = "";
+      renderFeed();
+    });
+
+    newPromptBtn.addEventListener("click", () => renderPrompt(true));
+    savePromptBtn.addEventListener("click", savePromptToMemory);
+
+    renderPrompt();
+    updateAuthState();
+  </script>
+</body>
+</html>
+   
